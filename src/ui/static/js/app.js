@@ -9,7 +9,7 @@ let statusInterval;
 let logInterval;
 let powerDataHistory = [];
 
-showStartNotification('This is a test');
+
 
 /**
  * Update the status display with current data

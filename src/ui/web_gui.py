@@ -297,7 +297,7 @@ class LinuxTrainerWebGUI:
             
             # Add to current session if training
             if self.is_training and self.current_session:
-                self.session_manager.add_power_data(self.current_session, power_data)
+                self.session_manager.add_power_data(power_data)
                 
         except Exception as e:
             self.connection_log.add_log(f"❌ Data processing error: {str(e)}", "ERROR")
