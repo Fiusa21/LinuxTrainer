@@ -7,3 +7,5 @@ pydantic>=2.0.0
 loguru>=0.7.0
 rich>=14.0.0
 pytest>=7.0.0
+garmin-fit-sdk>=21.0.0
+flask>=2.0.0

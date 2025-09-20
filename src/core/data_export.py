@@ -64,6 +64,9 @@ class DataExporter:
         except Exception as e:
             logger.error(f"Failed to export CSV: {e}")
             raise
+
+    def export_to_fit(self, session: TrainingSession, filename: Optional[str] = None) -> str:
+        """Export session to fit file"""
             
     def export_to_json(self, session: TrainingSession, filename: Optional[str] = None) -> str:
         """Export session to JSON format"""
