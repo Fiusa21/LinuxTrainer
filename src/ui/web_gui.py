@@ -4,7 +4,7 @@ LinuxTrainer Web GUI
 import asyncio
 import threading
 from datetime import datetime
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 import logging
 import sys
 from pathlib import Path
@@ -49,7 +49,14 @@ class ConnectionLogHandler:
 
 class LinuxTrainerWebGUI:
     def __init__(self):
-        self.app = Flask(__name__, template_folder=str(project_root / 'src' / 'ui' / 'templates'))
+        # Configure Flask with proper static file paths
+        self.app = Flask(
+            __name__, 
+            template_folder=str(project_root / 'src' / 'ui' / 'templates'),
+            static_folder=str(project_root / 'src' / 'ui' / 'static'),
+            static_url_path='/static'
+        )
+        
         self.kickr: Optional[KickrTrainer] = None
         self.is_connected = False
         self.is_training = False
@@ -82,6 +89,11 @@ class LinuxTrainerWebGUI:
         @self.app.route('/')
         def index():
             return render_template('index.html')
+        
+        @self.app.route('/static/<path:filename>')
+        def static_files(filename):
+            """Serve static files"""
+            return send_from_directory(self.app.static_folder, filename)
         
         @self.app.route('/api/status')
         def api_status():
@@ -179,9 +191,9 @@ class LinuxTrainerWebGUI:
                 if not self.is_training:
                     return jsonify({'success': False, 'message': 'Not currently training'})
                 
-                # End current session
+                # End current session - FIXED: end_session() takes no parameters
                 if self.current_session:
-                    self.session_manager.end_session(self.current_session)
+                    self.session_manager.end_session()  # No parameter needed
                     self.current_session = None
                 
                 self.is_training = False
@@ -290,7 +302,7 @@ class LinuxTrainerWebGUI:
         except Exception as e:
             self.connection_log.add_log(f"❌ Data processing error: {str(e)}", "ERROR")
 
-    def run(self, host='0.0.0.0', port=5001, debug=False):
+    def run(self, host='0.0.0.0', port=5003, debug=False):
         """Run the web GUI"""
         self.connection_log.add_log("System ready", "INFO")
         logger.info(f"Starting LinuxTrainer Web GUI on http://{host}:{port}")
