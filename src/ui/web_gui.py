@@ -5,10 +5,11 @@ import asyncio
 import threading
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
-import logging # Changed from loguru to logging
+import logging
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+import json
 
 # Ensure the project root is in the sys.path for absolute imports
 project_root = Path(__file__).resolve().parents[2]
@@ -21,6 +22,30 @@ from src.core.session_manager import SessionManager
 from src.core.data_exporter import DataExporter
 
 logger = logging.getLogger(__name__)
+
+class ConnectionLogHandler:
+    """Simple log handler that only stores connection-related messages"""
+    def __init__(self):
+        self.logs = []
+        self.max_logs = 20  # Keep only last 20 logs
+    
+    def add_log(self, message, level="INFO"):
+        log_entry = {
+            'timestamp': datetime.now().strftime('%H:%M:%S'),
+            'level': level,
+            'message': message
+        }
+        self.logs.append(log_entry)
+        
+        # Keep only the last max_logs entries
+        if len(self.logs) > self.max_logs:
+            self.logs = self.logs[-self.max_logs:]
+    
+    def get_logs(self):
+        return self.logs.copy()
+    
+    def clear_logs(self):
+        self.logs.clear()
 
 class LinuxTrainerWebGUI:
     def __init__(self):
@@ -46,192 +71,237 @@ class LinuxTrainerWebGUI:
         self.rider_weight_kg = 75.0
         self.gradient_percent = 0.0
         
+        # Setup connection log handler
+        self.connection_log = ConnectionLogHandler()
+        
         self._setup_routes()
 
     def _setup_routes(self):
+        """Setup Flask routes"""
+        
         @self.app.route('/')
         def index():
-            return render_template('index.html', rider_weight=self.rider_weight_kg, gradient=self.gradient_percent)
-
+            return render_template('index.html')
+        
         @self.app.route('/api/status')
         def api_status():
+            """Get current status and data"""
             return jsonify({
                 'connected': self.is_connected,
                 'training': self.is_training,
-                'data': self.latest_data,
-                'config': {
-                    'rider_weight_kg': self.rider_weight_kg,
-                    'gradient_percent': self.gradient_percent
-                }
+                'data': self.latest_data
             })
-
-        @self.app.route('/api/set_config', methods=['POST'])
-        def api_set_config():
-            data = request.get_json()
-            if 'rider_weight_kg' in data:
-                try:
-                    self.rider_weight_kg = float(data['rider_weight_kg'])
-                    if self.kickr:
-                        self.kickr.rider_weight_kg = self.rider_weight_kg
-                    logger.info(f"Rider weight set to {self.rider_weight_kg} kg")
-                except ValueError:
-                    return jsonify({'success': False, 'message': 'Invalid rider weight'}), 400
-            if 'gradient_percent' in data:
-                try:
-                    self.gradient_percent = float(data['gradient_percent'])
-                    if self.kickr:
-                        self.kickr.gradient_percent = self.gradient_percent
-                    logger.info(f"Gradient set to {self.gradient_percent}%")
-                except ValueError:
-                    return jsonify({'success': False, 'message': 'Invalid gradient'}), 400
-            return jsonify({'success': True, 'message': 'Configuration updated'})
         
         @self.app.route('/api/connect', methods=['POST'])
         def api_connect():
-            if self.is_connected:
-                return jsonify({'success': False, 'message': 'Already connected'})
-
-            def connect_async():
-                try:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
+            """Connect to Kickr trainer"""
+            try:
+                if self.is_connected:
+                    return jsonify({'success': False, 'message': 'Already connected'})
+                
+                self.connection_log.add_log("Searching for Kickr devices...", "INFO")
+                
+                # Start the asyncio event loop in a separate thread
+                if not self.loop or self.loop.is_closed():
+                    self.loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(self.loop)
+                    self.thread = threading.Thread(target=self._run_async_loop, daemon=True)
+                    self.thread.start()
+                
+                # Schedule the connection in the event loop
+                future = asyncio.run_coroutine_threadsafe(self._connect_async(), self.loop)
+                result = future.result(timeout=30)  # 30 second timeout
+                
+                if result:
+                    self.is_connected = True
+                    self.connection_log.add_log("✅ Successfully connected to Kickr trainer", "SUCCESS")
+                    return jsonify({'success': True, 'message': 'Connected to Kickr trainer'})
+                else:
+                    self.connection_log.add_log("❌ Failed to connect to Kickr trainer", "ERROR")
+                    return jsonify({'success': False, 'message': 'Failed to connect to Kickr trainer'})
                     
-                    logger.info("Scanning for Kickr devices...")
-                    devices = loop.run_until_complete(KickrTrainer.scan_for_devices(timeout=10))
-                    
-                    if not devices:
-                        logger.error("No Kickr devices found!")
-                        return
-                    
-                    device_info = devices[0]
-                    logger.info(f"Found Kickr: {device_info.name}")
-                    
-                    # Create Kickr instance
-                    self.kickr = KickrTrainer(device_info)
-                    self.kickr.rider_weight_kg = self.rider_weight_kg # Apply current config
-                    self.kickr.gradient_percent = self.gradient_percent # Apply current config
-                    self.kickr.add_data_callback(self.on_power_data)
-                    
-                    # Connect
-                    success = loop.run_until_complete(self.kickr.connect())
-                    
-                    if success:
-                        self.is_connected = True
-                        self.loop = loop
-                        logger.info("Successfully connected to Kickr")
-                        # Keep loop running
-                        loop.run_forever()
-                    else:
-                        logger.error("Failed to connect to Kickr.")
-                    
-                except Exception as e:
-                    logger.error(f"Connection error: {e}")
-            
-            # Start connection in thread
-            self.thread = threading.Thread(target=connect_async, daemon=True)
-            self.thread.start()
-            
-            return jsonify({'success': True, 'message': 'Connecting...'})
-
+            except Exception as e:
+                self.connection_log.add_log(f"❌ Connection error: {str(e)}", "ERROR")
+                return jsonify({'success': False, 'message': str(e)})
+        
         @self.app.route('/api/disconnect', methods=['POST'])
         def api_disconnect():
-            if self.kickr and self.is_connected:
-                if self.loop:
-                    # Schedule the disconnect in the event loop
-                    asyncio.run_coroutine_threadsafe(self.kickr.disconnect(), self.loop)
-                    self.loop.call_soon_threadsafe(self.loop.stop)
-                self.is_connected = False
-                self.kickr = None
-                self.is_training = False
-                self.latest_data = {
-                    'power': 0, 'cadence': 0, 'speed': 0.0, 'duration': "00:00:00", 'data_count': 0
-                }
-                logger.info("Disconnected from Kickr")
+            """Disconnect from Kickr trainer"""
+            try:
+                if not self.is_connected:
+                    return jsonify({'success': False, 'message': 'Not connected'})
                 
-            return jsonify({'success': True, 'message': 'Disconnected'})
-
+                self.connection_log.add_log("Disconnecting from Kickr trainer...", "INFO")
+                
+                if self.kickr:
+                    # Schedule disconnection in the event loop
+                    future = asyncio.run_coroutine_threadsafe(self._disconnect_async(), self.loop)
+                    future.result(timeout=10)  # 10 second timeout
+                
+                self.is_connected = False
+                self.is_training = False
+                self.kickr = None
+                self.connection_log.add_log("✅ Disconnected from Kickr trainer", "SUCCESS")
+                return jsonify({'success': True, 'message': 'Disconnected from Kickr trainer'})
+                
+            except Exception as e:
+                self.connection_log.add_log(f"❌ Disconnection error: {str(e)}", "ERROR")
+                return jsonify({'success': False, 'message': str(e)})
+        
         @self.app.route('/api/start_training', methods=['POST'])
         def api_start_training():
-            if not self.is_connected:
-                return jsonify({'success': False, 'message': 'Not connected to Kickr'})
-            if self.is_training:
-                return jsonify({'success': False, 'message': 'Training already in progress'})
-
+            """Start training session"""
             try:
-                # Pass the device info from the connected Kickr
-                device_info = self.kickr.device_info
-                self.current_session = self.session_manager.start_session(device_info)
-                self.is_training = True
-                self.start_time = datetime.now()
-                logger.info("Training session started")
-                return jsonify({'success': True, 'message': 'Training session started'})
+                if not self.is_connected:
+                    return jsonify({'success': False, 'message': 'Not connected to trainer'})
+                
+                if self.is_training:
+                    return jsonify({'success': False, 'message': 'Already training'})
+                
+                # Start new session
+                if self.kickr and self.kickr.device_info:
+                    self.current_session = self.session_manager.start_session(self.kickr.device_info)
+                    self.start_time = datetime.now()
+                    self.is_training = True
+                    self.connection_log.add_log("🚴 Training session started", "SUCCESS")
+                    return jsonify({'success': True, 'message': 'Training started'})
+                else:
+                    return jsonify({'success': False, 'message': 'No device info available'})
+                    
             except Exception as e:
-                logger.error(f"Error starting training: {e}")
-                return jsonify({'success': False, 'message': f'Error: {e}'})
-
+                self.connection_log.add_log(f"❌ Failed to start training: {str(e)}", "ERROR")
+                return jsonify({'success': False, 'message': str(e)})
+        
         @self.app.route('/api/stop_training', methods=['POST'])
         def api_stop_training():
-            if not self.is_training:
-                return jsonify({'success': False, 'message': 'No training in progress'})
-
+            """Stop training session"""
             try:
-                if self.current_session:
-                    self.session_manager.end_session()
-                    self.session_manager.save_session(self.current_session)
-                self.is_training = False
-                logger.info("Training session stopped")
+                if not self.is_training:
+                    return jsonify({'success': False, 'message': 'Not currently training'})
                 
+                # End current session
+                if self.current_session:
+                    self.session_manager.end_session(self.current_session)
+                    self.current_session = None
+                
+                self.is_training = False
+                self.start_time = None
+                self.connection_log.add_log("⏹️ Training session stopped", "SUCCESS")
                 return jsonify({'success': True, 'message': 'Training stopped'})
                 
             except Exception as e:
-                logger.error(f"Error stopping training: {e}")
-                return jsonify({'success': False, 'message': f'Error: {e}'})
-                
+                self.connection_log.add_log(f"❌ Failed to stop training: {str(e)}", "ERROR")
+                return jsonify({'success': False, 'message': str(e)})
+        
         @self.app.route('/api/export', methods=['POST'])
         def api_export():
-            if not self.current_session:
-                return jsonify({'success': False, 'message': 'No session to export'})
-                
+            """Export training data"""
             try:
-                # Export data
-                exports = self.data_exporter.export_all_formats(self.current_session)
+                if not self.current_session:
+                    return jsonify({'success': False, 'message': 'No active session to export'})
                 
-                return jsonify({'success': True, 'message': 'Data exported', 'files': exports})
+                # Export data
+                export_paths = self.data_exporter.export_all_formats(self.current_session)
+                self.connection_log.add_log("📁 Data exported successfully", "SUCCESS")
+                return jsonify({'success': True, 'message': 'Data exported successfully', 'paths': export_paths})
                 
             except Exception as e:
-                logger.error(f"Error exporting data: {e}")
-                return jsonify({'success': False, 'message': f'Error: {e}'})
-    
+                self.connection_log.add_log(f"❌ Export failed: {str(e)}", "ERROR")
+                return jsonify({'success': False, 'message': str(e)})
+        
+        @self.app.route('/api/logs')
+        def api_logs():
+            """Get connection logs"""
+            logs = self.connection_log.get_logs()
+            return jsonify({'logs': logs})
+        
+        @self.app.route('/api/logs/clear', methods=['POST'])
+        def api_clear_logs():
+            """Clear all logs"""
+            self.connection_log.clear_logs()
+            self.connection_log.add_log("System ready", "INFO")
+            return jsonify({'success': True, 'message': 'Logs cleared'})
+
+    def _run_async_loop(self):
+        """Run the asyncio event loop in a separate thread"""
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
+
+    async def _connect_async(self):
+        """Async connection to Kickr trainer"""
+        try:
+            # Scan for devices
+            self.connection_log.add_log("Scanning for Kickr devices...", "INFO")
+            devices = await KickrTrainer.scan_for_devices(timeout=10)
+            if not devices:
+                self.connection_log.add_log("❌ No Kickr devices found", "ERROR")
+                return False
+            
+            self.connection_log.add_log(f"Found Kickr device: {devices[0].name}", "INFO")
+            
+            # Create trainer instance
+            self.kickr = KickrTrainer(devices[0])
+            self.kickr.rider_weight_kg = self.rider_weight_kg
+            self.kickr.gradient_percent = self.gradient_percent
+            
+            # Add data callback
+            self.kickr.add_data_callback(self.on_power_data)
+            
+            # Connect
+            self.connection_log.add_log("Connecting to Kickr trainer...", "INFO")
+            await self.kickr.connect()
+            self.connection_log.add_log(f"✅ Connected to {self.kickr.device_info.name}", "SUCCESS")
+            return True
+            
+        except Exception as e:
+            self.connection_log.add_log(f"❌ Connection failed: {str(e)}", "ERROR")
+            return False
+
+    async def _disconnect_async(self):
+        """Async disconnection from Kickr trainer"""
+        try:
+            if self.kickr:
+                await self.kickr.disconnect()
+        except Exception as e:
+            self.connection_log.add_log(f"❌ Disconnection error: {str(e)}", "ERROR")
+
     def on_power_data(self, power_data: PowerData):
         """Handle incoming power data"""
-        logger.debug(f"Received power data in GUI: Power={power_data.instantaneous_power}W, Cadence={power_data.cadence}, Speed={power_data.speed}")
-        
-        # Update latest data for display
-        self.latest_data['power'] = power_data.instantaneous_power
-        self.latest_data['cadence'] = power_data.cadence if power_data.cadence is not None else 0
-        self.latest_data['speed'] = power_data.speed if power_data.speed is not None else 0.0
-        
-        if hasattr(self.kickr, 'data_count'):
-            self.latest_data['data_count'] = self.kickr.data_count
+        try:
+            # Update latest data
+            self.latest_data.update({
+                'power': power_data.instantaneous_power,
+                'cadence': power_data.cadence if power_data.cadence is not None else 0,
+                'speed': power_data.speed if power_data.speed is not None else 0.0,
+                'data_count': self.latest_data.get('data_count', 0) + 1
+            })
             
-        # Add data to current session if training
-        if self.is_training and self.session_manager.current_session:
-            self.session_manager.add_power_data(power_data)
+            # Update duration
+            if self.start_time:
+                duration = datetime.now() - self.start_time
+                hours, remainder = divmod(duration.total_seconds(), 3600)
+                minutes, seconds = divmod(remainder, 60)
+                self.latest_data['duration'] = f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
             
-        # Update duration
-        if self.is_training and hasattr(self, 'start_time'):
-            duration = datetime.now() - self.start_time
-            hours, remainder = divmod(duration.total_seconds(), 3600)
-            minutes, seconds = divmod(remainder, 60)
-            self.latest_data['duration'] = f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
+            # Add to current session if training
+            if self.is_training and self.current_session:
+                self.session_manager.add_power_data(self.current_session, power_data)
+                
+        except Exception as e:
+            self.connection_log.add_log(f"❌ Data processing error: {str(e)}", "ERROR")
 
-    def run(self, host='127.0.0.1', port=5000):
-        logger.info(f"Starting LinuxTrainer Web GUI at http://{host}:{port}")
-        self.app.run(host=host, port=port, debug=False)
-
-def main():
-    gui = LinuxTrainerWebGUI()
-    gui.run()
+    def run(self, host='0.0.0.0', port=5001, debug=False):
+        """Run the web GUI"""
+        self.connection_log.add_log("System ready", "INFO")
+        logger.info(f"Starting LinuxTrainer Web GUI on http://{host}:{port}")
+        self.app.run(host=host, port=port, debug=debug)
 
 if __name__ == '__main__':
-    main()
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    gui = LinuxTrainerWebGUI()
+    gui.run(debug=True)

@@ -171,6 +171,90 @@
             cursor: not-allowed;
         }
         
+        /* Connection Status Styles */
+        .connection-status {
+            margin-top: 30px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+        
+        .connection-header {
+            background: rgba(0,0,0,0.8);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .connection-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        .connection-log {
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left: 3px solid transparent;
+            word-wrap: break-word;
+            transition: all 0.3s ease;
+        }
+        
+        .log-entry.INFO {
+            background: rgba(0,255,136,0.1);
+            border-left-color: #00ff88;
+        }
+        
+        .log-entry.SUCCESS {
+            background: rgba(0,255,136,0.2);
+            border-left-color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .log-entry.ERROR {
+            background: rgba(255,107,107,0.2);
+            border-left-color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        .log-timestamp {
+            color: #888;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        
+        .log-message {
+            color: #fff;
+        }
+        
+        .clear-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .clear-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -194,6 +278,10 @@
             .controls {
                 flex-direction: column;
                 align-items: center;
+            }
+            
+            .connection-log {
+                height: 120px;
             }
         }
     </style>
@@ -241,9 +329,23 @@
             <button class="btn btn-secondary" id="stopBtn" onclick="stopTraining()" disabled>Stop Training</button>
             <button class="btn btn-primary" id="exportBtn" onclick="exportData()" disabled>Export Data</button>
         </div>
+
+        <!-- Connection Status Section -->
+        <div class="connection-status">
+            <div class="connection-header">
+                <div class="connection-title">📡 Connection Status</div>
+                <button class="clear-btn" onclick="clearLogs()">Clear</button>
+            </div>
+            <div class="connection-log" id="connectionLog">
+                <div class="log-entry INFO">
+                    <span class="log-timestamp">00:00:00</span>
+                    <span class="log-message">System ready</span>
+                </div>
+            </div>
+        </div>
         
         <div class="footer">
-            <p>Built with ❤️ for Linux cyclists</p>
+            <p>1.0.0-alpha</p>
         </div>
     </div>
 
@@ -251,6 +353,7 @@
         let isConnected = false;
         let isTraining = false;
         let statusInterval;
+        let logInterval;
 
         function updateStatus() {
             fetch('/api/status')
@@ -296,92 +399,169 @@
                 })
                 .catch(error => {
                     console.error('Error fetching status:', error);
+                    addLogEntry('ERROR', 'Error fetching status: ' + error.message);
+                });
+        }
+
+        function updateLogs() {
+            fetch('/api/logs')
+                .then(response => response.json())
+                .then(data => {
+                    const connectionLog = document.getElementById('connectionLog');
+                    connectionLog.innerHTML = '';
+                    
+                    // Display logs (most recent first)
+                    data.logs.reverse().forEach(log => {
+                        addLogEntryToDOM(log);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching logs:', error);
+                });
+        }
+
+        function addLogEntry(level, message) {
+            const logEntry = {
+                timestamp: new Date().toLocaleTimeString(),
+                level: level,
+                message: message
+            };
+            addLogEntryToDOM(logEntry);
+        }
+
+        function addLogEntryToDOM(log) {
+            const connectionLog = document.getElementById('connectionLog');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log-entry ${log.level}`;
+            
+            logDiv.innerHTML = `
+                <span class="log-timestamp">${log.timestamp}</span>
+                <span class="log-message">${log.message}</span>
+            `;
+            
+            connectionLog.insertBefore(logDiv, connectionLog.firstChild);
+            
+            // Keep only last 15 log entries visible
+            while (connectionLog.children.length > 15) {
+                connectionLog.removeChild(connectionLog.lastChild);
+            }
+            
+            // Auto-scroll to top (newest logs)
+            connectionLog.scrollTop = 0;
+        }
+
+        function clearLogs() {
+            fetch('/api/logs/clear', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('connectionLog').innerHTML = '';
+                        addLogEntry('INFO', 'System ready');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error clearing logs:', error);
+                    addLogEntry('ERROR', 'Error clearing logs: ' + error.message);
                 });
         }
 
         function connect() {
             if (isConnected) {
+                addLogEntry('INFO', 'Disconnecting from Kickr trainer...');
+                
                 fetch('/api/disconnect', { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            console.log('Disconnected from Kickr');
+                            addLogEntry('SUCCESS', '✅ Disconnected from Kickr trainer');
                         } else {
-                            alert('Failed to disconnect: ' + data.message);
+                            addLogEntry('ERROR', '❌ Failed to disconnect: ' + data.message);
                         }
                     })
                     .catch(error => {
                         console.error('Error disconnecting:', error);
-                        alert('Error disconnecting from Kickr');
+                        addLogEntry('ERROR', '❌ Error disconnecting from Kickr: ' + error.message);
                     });
             } else {
+                addLogEntry('INFO', 'Connecting to Kickr trainer...');
+                
                 fetch('/api/connect', { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            console.log('Connecting to Kickr...');
+                            addLogEntry('SUCCESS', '✅ Connected to Kickr trainer');
                         } else {
-                            alert('Failed to connect: ' + data.message);
+                            addLogEntry('ERROR', '❌ Failed to connect: ' + data.message);
                         }
                     })
                     .catch(error => {
                         console.error('Error connecting:', error);
-                        alert('Error connecting to Kickr');
+                        addLogEntry('ERROR', '❌ Error connecting to Kickr: ' + error.message);
                     });
             }
         }
 
         function startTraining() {
+            addLogEntry('INFO', 'Starting training session...');
+            
             fetch('/api/start_training', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        console.log('Training started');
+                        addLogEntry('SUCCESS', '🚴 Training session started');
                     } else {
-                        alert('Failed to start training: ' + data.message);
+                        addLogEntry('ERROR', '❌ Failed to start training: ' + data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error starting training:', error);
-                    alert('Error starting training');
+                    addLogEntry('ERROR', '❌ Error starting training: ' + error.message);
                 });
         }
 
         function stopTraining() {
+            addLogEntry('INFO', 'Stopping training session...');
+            
             fetch('/api/stop_training', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        console.log('Training stopped');
+                        addLogEntry('SUCCESS', '⏹️ Training session stopped');
                     } else {
-                        alert('Failed to stop training: ' + data.message);
+                        addLogEntry('ERROR', '❌ Failed to stop training: ' + data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error stopping training:', error);
-                    alert('Error stopping training');
+                    addLogEntry('ERROR', '❌ Error stopping training: ' + error.message);
                 });
         }
 
         function exportData() {
+            addLogEntry('INFO', 'Exporting training data...');
+            
             fetch('/api/export', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Data exported successfully!');
+                        addLogEntry('SUCCESS', '�� Data exported successfully');
                     } else {
-                        alert('Failed to export data: ' + data.message);
+                        addLogEntry('ERROR', '❌ Failed to export data: ' + data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error exporting data:', error);
-                    alert('Error exporting data');
+                    addLogEntry('ERROR', '❌ Error exporting data: ' + error.message);
                 });
         }
 
         // Start status updates
         statusInterval = setInterval(updateStatus, 1000);
         updateStatus(); // Initial update
+
+        // Start log updates
+        logInterval = setInterval(updateLogs, 1000);
+        updateLogs(); // Initial log update
     </script>
 </body>
 </html>
