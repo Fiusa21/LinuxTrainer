@@ -1,0 +1,201 @@
+{
+  "session_info": {
+    "session_id": "c4df320a-33ae-4ca0-a65b-94bfca814ee8",
+    "start_time": "2025-09-19T23:49:43.145659",
+    "end_time": "2025-09-19T23:50:06.516945",
+    "total_distance_km": 0.02772877616666667,
+    "total_energy_kj": 3.226535872777778,
+    "device_info": {
+      "name": "KICKR CORE A62A",
+      "address": "CA93C0B3-95C4-3A47-0B73-D05DFB5EF874",
+      "device_type": "smart_trainer"
+    }
+  },
+  "power_data": [
+    {
+      "timestamp": "2025-09-19T23:49:43.804811",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:44.794692",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:45.799466",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:46.804603",
+      "instantaneous_power": 27,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 5.4,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:47.794161",
+      "instantaneous_power": 32,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 6.4,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:48.813991",
+      "instantaneous_power": 41,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 8.200000000000001,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:49.804746",
+      "instantaneous_power": 37,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 7.4,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:50.794870",
+      "instantaneous_power": 23,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 4.6000000000000005,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:51.897871",
+      "instantaneous_power": 17,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 3.4000000000000004,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:52.864662",
+      "instantaneous_power": 9,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 1.8,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:53.839870",
+      "instantaneous_power": 3,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.6000000000000001,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:54.814780",
+      "instantaneous_power": 3,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.6000000000000001,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:55.984644",
+      "instantaneous_power": 24,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 4.800000000000001,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:56.960008",
+      "instantaneous_power": 34,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 6.800000000000001,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:57.934605",
+      "instantaneous_power": 39,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 7.800000000000001,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:58.909878",
+      "instantaneous_power": 38,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 7.6000000000000005,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:49:59.884848",
+      "instantaneous_power": 38,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 7.6000000000000005,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:50:00.859684",
+      "instantaneous_power": 37,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 7.4,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:50:01.835641",
+      "instantaneous_power": 38,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 7.6000000000000005,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:50:02.809555",
+      "instantaneous_power": 29,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 5.800000000000001,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:50:03.979912",
+      "instantaneous_power": 19,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 3.8000000000000003,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:50:04.954789",
+      "instantaneous_power": 9,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 1.8,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:50:05.929595",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    }
+  ],
+  "heart_rate_data": []
+}

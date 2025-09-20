@@ -1,0 +1,121 @@
+{
+  "session_info": {
+    "session_id": "03c75715-7df0-4fd4-bdd2-e5dd4dad240e",
+    "start_time": "2025-09-19T23:51:35.841331",
+    "end_time": "2025-09-19T23:51:50.256030",
+    "total_distance_km": 0.00412122738888889,
+    "total_energy_kj": 0.29630214611111116,
+    "device_info": {
+      "name": "KICKR CORE A62A",
+      "address": "CA93C0B3-95C4-3A47-0B73-D05DFB5EF874",
+      "device_type": "smart_trainer"
+    }
+  },
+  "power_data": [
+    {
+      "timestamp": "2025-09-19T23:51:36.800763",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:37.790449",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:38.794765",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:39.800876",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:40.790420",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:41.795421",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:42.800387",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:43.790740",
+      "instantaneous_power": 0,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 0.0,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:44.795315",
+      "instantaneous_power": 9,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 1.8,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:45.964607",
+      "instantaneous_power": 9,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 1.8,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:46.940063",
+      "instantaneous_power": 18,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 3.6,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:47.915988",
+      "instantaneous_power": 19,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 3.8000000000000003,
+      "distance": 0.0
+    },
+    {
+      "timestamp": "2025-09-19T23:51:48.890541",
+      "instantaneous_power": 19,
+      "average_power": null,
+      "cadence": 0,
+      "speed": 3.8000000000000003,
+      "distance": 0.0
+    }
+  ],
+  "heart_rate_data": []
+}

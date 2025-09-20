@@ -1,0 +1,16 @@
+{
+  "session_info": {
+    "session_id": "2184aa05-edab-4c71-b93d-b2711db5a4c7",
+    "start_time": "2025-09-20T00:18:25.732626",
+    "end_time": "2025-09-20T00:19:00.687739",
+    "total_distance_km": 0.0,
+    "total_energy_kj": 0.0,
+    "device_info": {
+      "name": "KICKR CORE A62A",
+      "address": "CA93C0B3-95C4-3A47-0B73-D05DFB5EF874",
+      "device_type": "smart_trainer"
+    }
+  },
+  "power_data": [],
+  "heart_rate_data": []
+}
