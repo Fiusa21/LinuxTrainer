@@ -192,7 +192,8 @@ function addLogEntryToDOM(log) {
     }
     
     // Auto-scroll to top (newest logs)
-    connectionLog.scrollTop = 0;
+    // Do not use for now
+    //connectionLog.scrollTop = 1;
 }
 
 /**
