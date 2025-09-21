@@ -87,9 +87,15 @@ class LinuxTrainerWebGUI:
         """Setup Flask routes"""
         
         @self.app.route('/')
+        def startup():
+            return render_template('startup.html')
+
+        @self.app.route('/index')
         def index():
             return render_template('index.html')
         
+
+
         @self.app.route('/static/<path:filename>')
         def static_files(filename):
             """Serve static files"""
