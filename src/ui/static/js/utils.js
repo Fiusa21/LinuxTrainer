@@ -35,8 +35,8 @@ function formatCadence(cadence) {
 
 /**
  * Format speed value with proper units
- * @param {number} heartrate - Speed in km/h
- * @returns {string} Formatted speed string
+ * @param {number} heartrate - heartrate in bpm
+ * @returns {string} Formatted HR string
  */
 function formatHeartrate(heartrate) {
     return `${(heartrate || 0)} bpm`;
@@ -44,8 +44,8 @@ function formatHeartrate(heartrate) {
 
 /**
  * Format HR value with proper units
- * @param {number} speed - HR in bpm
- * @returns {string} Formatted HR string
+ * @param {number} speed - speed in km/h
+ * @returns {string} Formatted speed string
  */
 function formatSpeed(speed) {
     return `${(speed || 0).toFixed(1)} km/h`;

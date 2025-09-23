@@ -9,7 +9,7 @@ An indoor training application for Linux that connects to smart trainers and cyc
 - **Real-time data collection** (power, cadence, speed, heart rate)
 - **Live display** with beautiful TUI interface
 - **Structured workouts** (steady state, intervals, tempo)
-- **Data export** (CSV, JSON, TCX formats)
+- **Data export** (CSV, JSON, TCX formats) (fit is wip)
 - **Session management** with automatic data persistence
 - **Cross-platform** compatibility (Linux, macOS, Windows)
 
@@ -18,6 +18,19 @@ An indoor training application for Linux that connects to smart trainers and cyc
 - Python 3.8+
 - Bluetooth Low Energy adapter
 - Compatible smart trainer (tested with Wahoo Kickr)
+
+## Dataflow
+Frontend (app.js):
+powerDataHistory is a client-side only array that stores the last 100 data points
+It's used only for client-side statistics display 
+It's reset when training starts 
+It's NOT sent to the backend during export
+
+Backend Data Flow:
+Real-time data collection: on_power_data() method in web_gui.py receives power data from the Kickr trainer
+Session storage: Data is stored in self.current_session via self.session_manager.add_power_data(power_data) 
+Export process: When /api/export is called (lines 214-228 in web_gui.py), 
+it exports self.current_session data, not the frontend powerDataHistory
 
 ## 🛠️ Installation
 
@@ -34,12 +47,12 @@ pip install -r requirements.txt
 
 3. **Run the application:**
 ```bash
-python cli.py --help
+python start_gui.py 
 ```
 
 ## 🎯 Quick Start
 
-### 1. Scan for Devices
+### 1. Scan for Devices (OPTIONAL)
 ```bash
 python cli.py scan
 ```
@@ -47,27 +60,13 @@ python cli.py scan
 ### 2. Start a Training Session
 ```bash
 # Free ride with live display
-python cli.py train
+python start_gui.py 
 
-# Structured workout
-python cli.py train --workout steady
-python cli.py train --workout intervals
-python cli.py train --workout tempo
-
-# Without live display (for headless operation)
-python cli.py train --no-display
 ```
 
 ### 3. View Training Sessions
 ```bash
-# List all sessions
-python cli.py sessions
 
-# Export session data
-python cli.py export <session-id> --format csv
-python cli.py export <session-id> --format json
-python cli.py export <session-id> --format tcx
-python cli.py export <session-id> --format all
 ```
 
 ## 🏗️ Project Structure
@@ -94,14 +93,6 @@ LinuxTrainer/
 └── README.md                    # This file
 ```
 
-## 🎮 Available Workouts
-
-| Workout Type | Description | Duration | Target Power |
-|--------------|-------------|----------|--------------|
-| `steady`     | Steady state ride | 30 min | 200W |
-| `intervals`  | High-intensity intervals | ~10 min | 300W work, 150W rest |
-| `tempo`      | Tempo ride | 20 min | 250W @ 90 RPM |
-| `free`       | Free ride | Unlimited | Your choice |
 
 ## 📊 Data Export Formats
 
@@ -146,6 +137,10 @@ python -m pytest tests/ -v
 
 ## 📈 Roadmap
 
+- [ ] Live average Power data
+- [ ] Live data graph
+- [ ] More data during active sessions
+- [ ] Start screen implementation (current version dummy only)
 - [ ] Heart rate monitor support
 - [ ] Multiple device support
 - [ ] Web interface
@@ -163,8 +158,4 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 [Add your license here]
 
-## 🙏 Acknowledgments
 
-- [Bleak](https://github.com/hbldh/bleak) for Bluetooth Low Energy support
-- [Rich](https://github.com/Textualize/rich) for beautiful terminal interfaces
-- [Wahoo Fitness](https://www.wahoofitness.com/) for excellent smart trainers
