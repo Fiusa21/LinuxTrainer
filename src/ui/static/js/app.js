@@ -46,7 +46,8 @@ function updateStatus() {
                     timestamp: Date.now(),
                     power: data.data.power,
                     cadence: data.data.cadence,
-                    speed: data.data.speed
+                    speed: data.data.speed,
+                    heartrate: data.data.heartrate
                 });
                 
                 // Keep only last 100 data points
@@ -110,6 +111,8 @@ function updateDataValues(data) {
     document.getElementById('powerValue').textContent = formatPower(data.power);
     document.getElementById('cadenceValue').textContent = formatCadence(data.cadence);
     document.getElementById('speedValue').textContent = formatSpeed(data.speed);
+    document.getElementById('avgPwrValue').textContent = formatPower(data.power);
+    document.getElementById('heartrateValue').textContent = formatHeartrate(data.heartrate);
     document.getElementById('durationValue').textContent = data.duration || '00:00:00';
 }
 
