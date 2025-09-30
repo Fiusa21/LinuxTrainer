@@ -1,7 +1,7 @@
 import asyncio
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path('.').absolute()))
+sys.path.insert(0, str(Path('..').absolute()))
 from src.devices.kickr_trainer import KickrTrainer
 from src.core.models import PowerData
 import struct

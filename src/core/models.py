@@ -63,6 +63,9 @@ class TrainingSession:
     heart_rate_data: List[HeartRateData] = None
     total_distance: float = 0.0
     total_energy: float = 0.0  # kJ
+    avg_power: float = 0.0
+    max_power: int = 0
+    power_count: int = 0
     
     def __post_init__(self):
         if self.power_data is None:

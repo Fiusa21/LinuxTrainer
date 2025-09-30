@@ -24,6 +24,10 @@ function formatPower(power) {
     return `${power || 0} W`;
 }
 
+function formatAverage(avgPower) {
+   return `${Math.round(avgPower || 0)} W`;
+}
+
 /**
  * Format cadence value with proper units
  * @param {number} cadence - Cadence in RPM

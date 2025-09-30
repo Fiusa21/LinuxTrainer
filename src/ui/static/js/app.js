@@ -106,12 +106,13 @@ function updateTrainingStatus(training) {
  * @param {Object} data - Power data object
  */
 function updateDataValues(data) {
+
     if (!data) return;
     
     document.getElementById('powerValue').textContent = formatPower(data.power);
     document.getElementById('cadenceValue').textContent = formatCadence(data.cadence);
     document.getElementById('speedValue').textContent = formatSpeed(data.speed);
-    document.getElementById('avgPwrValue').textContent = formatPower(data.power);
+    document.getElementById('avgPwrValue').textContent = formatAverage(data.session_stats?.avg_power || 0);
     document.getElementById('heartrateValue').textContent = formatHeartrate(data.heartrate);
     document.getElementById('durationValue').textContent = data.duration || '00:00:00';
 }

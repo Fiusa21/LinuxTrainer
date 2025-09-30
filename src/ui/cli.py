@@ -1,5 +1,5 @@
 """
-Command-line interface for LinuxTrainer
+Command-line interface for LinuxTrainer CURRENTLY NOT RUNNABLE!!!
 """
 import asyncio
 import argparse

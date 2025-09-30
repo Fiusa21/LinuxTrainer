@@ -100,14 +100,23 @@ class LinuxTrainerWebGUI:
         def static_files(filename):
             """Serve static files"""
             return send_from_directory(self.app.static_folder, filename)
-        
+
         @self.app.route('/api/status')
         def api_status():
             """Get current status and data"""
+            session_stats = {}
+            if self.current_session:
+                session_stats = {
+                    'avg_power': self.current_session.avg_power,
+                    'max_power': self.current_session.max_power,
+                    'power_count': self.current_session.power_count
+                }
+
             return jsonify({
                 'connected': self.is_connected,
                 'training': self.is_training,
-                'data': self.latest_data
+                'data': self.latest_data,
+                'session_stats': session_stats
             })
         
         @self.app.route('/api/connect', methods=['POST'])
